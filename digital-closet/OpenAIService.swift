@@ -25,6 +25,10 @@ class OpenAIService {
             throw OpenAIError.missingAPIKey
         }
         
+        // Debug: Check API key format (show only first few characters for security)
+        let keyPrefix = String(apiKey.prefix(10))
+        print("Using OpenAI API key starting with: \(keyPrefix)...")
+        
         // Convert image to base64
         let base64Image = imageData.base64EncodedString()
         
@@ -35,7 +39,7 @@ class OpenAIService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
         let requestBody: [String: Any] = [
-            "model": "gpt-4-vision-preview",
+            "model": "gpt-4o",
             "messages": [
                 [
                     "role": "system",
@@ -50,10 +54,7 @@ class OpenAIService {
                         ],
                         [
                             "type": "image_url",
-                            "image_url": [
-                                "url": "data:image/jpeg;base64,\(base64Image)",
-                                "detail": "low"
-                            ]
+                            "image_url": ["url": "data:image/jpeg;base64,\(base64Image)"]
                         ]
                     ]
                 ]
@@ -64,6 +65,8 @@ class OpenAIService {
         
         request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
         
+        print("Sending request to OpenAI with model: gpt-4-turbo")
+        
         let (data, response) = try await URLSession.shared.data(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse else {
@@ -71,6 +74,12 @@ class OpenAIService {
         }
         
         if httpResponse.statusCode != 200 {
+            // Try to get error details from response
+            if let errorJson = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let error = errorJson["error"] as? [String: Any],
+               let message = error["message"] as? String {
+                print("OpenAI API Error: \(message)")
+            }
             throw OpenAIError.apiError(statusCode: httpResponse.statusCode)
         }
         

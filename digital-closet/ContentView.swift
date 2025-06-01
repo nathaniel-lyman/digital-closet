@@ -245,6 +245,10 @@ struct AddClothingItemView: View {
                                 }
                             } catch {
                                 print("AI analysis failed: \(error)")
+                                // If you get a 404 error, try changing the model in OpenAIService.swift to:
+                                // - "gpt-4-vision-preview" (older but might work)
+                                // - "gpt-4-turbo" (current, supports vision)
+                                // - "gpt-4o" (newest, if available on your account)
                                 // Fields remain empty if analysis fails
                             }
                         }
