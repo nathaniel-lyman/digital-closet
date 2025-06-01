@@ -15,9 +15,10 @@ class OpenAIService {
     }
     
     struct ClothingAnalysis: Codable {
+        let title: String
         let category: String
+        let subcategory: String
         let color: String
-        let season: String
     }
     
     func analyzeClothing(imageData: Data) async throws -> ClothingAnalysis {
@@ -43,14 +44,14 @@ class OpenAIService {
             "messages": [
                 [
                     "role": "system",
-                    "content": "You are a fashion expert analyzing clothing items. Respond ONLY with valid JSON in this exact format: {\"category\": \"category\", \"color\": \"color\", \"season\": \"season\"}. For category, use only: Shirt, Pants, Jacket, Dress, Shoes, or Accessory. For season, use: Spring, Summer, Fall, Winter, or All-Season."
+                    "content": "You are a fashion expert analyzing clothing items. Respond ONLY with valid JSON in this exact format: {\"title\": \"descriptive title\", \"category\": \"category\", \"subcategory\": \"subcategory\", \"color\": \"color\"}. For title, provide a short descriptive name for the item (e.g., 'Navy Blue Button-Down', 'Vintage Denim Jacket'). For category, use only: Shirt, Pants, Jacket, Dress, Shoes, or Accessory. For subcategory, provide the specific type based on the category: For Shirt use (Button-Down, T-Shirt, Polo, Tank Top, Blouse, Other). For Pants use (Jeans, Chinos, Shorts, Sweatpants, Dress Pants, Other). For Jacket use (Bomber, Denim, Leather, Blazer, Puffer, Windbreaker, Other). For Dress use (Casual, Formal, Maxi, Mini, Midi, Other). For Shoes use (Sneakers, Boots, Dress Shoes, Sandals, Heels, Loafers, Other). For Accessory use (Hat, Bag, Belt, Scarf, Jewelry, Watch, Other)."
                 ],
                 [
                     "role": "user",
                     "content": [
                         [
                             "type": "text",
-                            "text": "Analyze this clothing item and provide its category, primary color, and most suitable season."
+                            "text": "Analyze this clothing item and provide its title, category, subcategory, and primary color."
                         ],
                         [
                             "type": "image_url",
