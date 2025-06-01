@@ -146,6 +146,14 @@ struct AddClothingItemView: View {
     @State private var selectedItem: PhotosPickerItem?
     @State private var selectedImageData: Data?
     @State private var category = ""
+    private let categories = [
+        "Shirt",
+        "Pants",
+        "Jacket",
+        "Dress",
+        "Shoes",
+        "Accessory"
+    ]
     @State private var color = ""
     @State private var season = ""
     @State private var showingError = false
@@ -170,7 +178,13 @@ struct AddClothingItemView: View {
                 }
                 
                 Section {
-                    TextField("Category", text: $category)
+                    Picker("Category", selection: $category) {
+                        Text("Select Category").tag("")
+                        ForEach(categories, id: \.self) { option in
+                            Text(option).tag(option)
+                        }
+                    }
+                    .pickerStyle(.menu)
                     TextField("Color", text: $color)
                     TextField("Season", text: $season)
                 }
@@ -213,7 +227,7 @@ struct AddClothingItemView: View {
         }
         
         guard !category.isEmpty else {
-            errorMessage = "Please enter a category"
+            errorMessage = "Please select a category"
             showingError = true
             return
         }
