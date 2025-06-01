@@ -1,0 +1,13 @@
+# General
+.DS_Store
+
+# Xcode build
+build/
+DerivedData/
+
+# Workspace
+*.xcworkspace
+xcuserdata/
+
+# Secrets
+Secrets.xcconfig
