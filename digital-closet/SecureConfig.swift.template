@@ -1,0 +1,10 @@
+// Copy this file to SecureConfig.swift and add your actual API keys
+// DO NOT commit SecureConfig.swift to version control!
+
+struct SecureConfig {
+    // Get your RemBg API key from: https://www.remove.bg/users/sign_up
+    static let remBgKey = "YOUR_REMBG_API_KEY"
+    
+    // Get your OpenAI API key from: https://platform.openai.com/api-keys
+    static let openAIKey = "YOUR_OPENAI_API_KEY"
+} 

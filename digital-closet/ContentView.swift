@@ -145,6 +145,7 @@ struct AddClothingItemView: View {
     
     @State private var selectedItem: PhotosPickerItem?
     @State private var selectedImageData: Data?
+    @State private var isProcessingImage = false
     @State private var category = ""
     private let categories = [
         "Shirt",
@@ -156,6 +157,7 @@ struct AddClothingItemView: View {
     ]
     @State private var color = ""
     @State private var season = ""
+    private let seasons = ["Spring", "Summer", "Fall", "Winter", "All-Season"]
     @State private var showingError = false
     @State private var errorMessage = ""
     
@@ -165,7 +167,14 @@ struct AddClothingItemView: View {
                 Section {
                     PhotosPicker(selection: $selectedItem,
                                matching: .images) {
-                        if let selectedImageData,
+                        if isProcessingImage {
+                            HStack {
+                                ProgressView()
+                                    .padding(.trailing, 8)
+                                Text("Processing image...")
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: 200)
+                        } else if let selectedImageData,
                            let uiImage = UIImage(data: selectedImageData) {
                             Image(uiImage: uiImage)
                                 .resizable()
@@ -175,6 +184,7 @@ struct AddClothingItemView: View {
                             Label("Select Photo", systemImage: "photo")
                         }
                     }
+                    .disabled(isProcessingImage)
                 }
                 
                 Section {
@@ -186,7 +196,13 @@ struct AddClothingItemView: View {
                     }
                     .pickerStyle(.menu)
                     TextField("Color", text: $color)
-                    TextField("Season", text: $season)
+                    Picker("Season", selection: $season) {
+                        Text("Select Season").tag("")
+                        ForEach(seasons, id: \.self) { option in
+                            Text(option).tag(option)
+                        }
+                    }
+                    .pickerStyle(.menu)
                 }
             }
             .navigationTitle("Add Item")
@@ -201,13 +217,59 @@ struct AddClothingItemView: View {
                     Button("Save") {
                         saveItem()
                     }
+                    .disabled(isProcessingImage)
                 }
             }
             .onChange(of: selectedItem) { _, newItem in
                 Task {
-                    if let data = try? await newItem?.loadTransferable(type: Data.self) {
-                        selectedImageData = data
+                    guard let newItem = newItem else { return }
+                    
+                    do {
+                        isProcessingImage = true
+                        
+                        // Load the image data
+                        if let data = try await newItem.loadTransferable(type: Data.self) {
+                            // Process through RemBg API
+                            let processedData = try await RemBgService.shared.removeBackground(from: data)
+                            selectedImageData = processedData
+                            
+                            // Analyze the clothing with OpenAI
+                            do {
+                                let analysis = try await OpenAIService.shared.analyzeClothing(imageData: processedData)
+                                
+                                // Auto-populate fields
+                                withAnimation {
+                                    category = analysis.category
+                                    color = analysis.color
+                                    season = analysis.season
+                                }
+                            } catch {
+                                print("AI analysis failed: \(error)")
+                                // Fields remain empty if analysis fails
+                            }
+                        }
+                    } catch {
+                        // If background removal fails, use original image
+                        if let data = try? await newItem.loadTransferable(type: Data.self) {
+                            selectedImageData = data
+                            
+                            // Try to analyze original image
+                            do {
+                                let analysis = try await OpenAIService.shared.analyzeClothing(imageData: data)
+                                withAnimation {
+                                    category = analysis.category
+                                    color = analysis.color
+                                    season = analysis.season
+                                }
+                            } catch {
+                                print("AI analysis failed: \(error)")
+                            }
+                        }
+                        errorMessage = "Background removal failed: \(error.localizedDescription). Using original image."
+                        showingError = true
                     }
+                    
+                    isProcessingImage = false
                 }
             }
             .alert("Error", isPresented: $showingError) {
@@ -239,7 +301,7 @@ struct AddClothingItemView: View {
         }
         
         guard !season.isEmpty else {
-            errorMessage = "Please enter a season"
+            errorMessage = "Please select a season"
             showingError = true
             return
         }
@@ -270,9 +332,19 @@ struct EditClothingItemView: View {
     
     @State private var selectedItem: PhotosPickerItem?
     @State private var selectedImageData: Data?
+    @State private var isProcessingImage = false
     @State private var category: String
+    private let categories = [
+        "Shirt",
+        "Pants",
+        "Jacket",
+        "Dress",
+        "Shoes",
+        "Accessory"
+    ]
     @State private var color: String
     @State private var season: String
+    private let seasons = ["Spring", "Summer", "Fall", "Winter", "All-Season"]
     @State private var showingError = false
     @State private var errorMessage = ""
     
@@ -290,7 +362,14 @@ struct EditClothingItemView: View {
                 Section {
                     PhotosPicker(selection: $selectedItem,
                                matching: .images) {
-                        if let selectedImageData,
+                        if isProcessingImage {
+                            HStack {
+                                ProgressView()
+                                    .padding(.trailing, 8)
+                                Text("Processing image...")
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: 200)
+                        } else if let selectedImageData,
                            let uiImage = UIImage(data: selectedImageData) {
                             Image(uiImage: uiImage)
                                 .resizable()
@@ -300,12 +379,25 @@ struct EditClothingItemView: View {
                             Label("Select Photo", systemImage: "photo")
                         }
                     }
+                    .disabled(isProcessingImage)
                 }
                 
                 Section {
-                    TextField("Category", text: $category)
+                    Picker("Category", selection: $category) {
+                        Text("Select Category").tag("")
+                        ForEach(categories, id: \.self) { option in
+                            Text(option).tag(option)
+                        }
+                    }
+                    .pickerStyle(.menu)
                     TextField("Color", text: $color)
-                    TextField("Season", text: $season)
+                    Picker("Season", selection: $season) {
+                        Text("Select Season").tag("")
+                        ForEach(seasons, id: \.self) { option in
+                            Text(option).tag(option)
+                        }
+                    }
+                    .pickerStyle(.menu)
                 }
             }
             .navigationTitle("Edit Item")
@@ -320,13 +412,54 @@ struct EditClothingItemView: View {
                     Button("Save") {
                         updateItem()
                     }
+                    .disabled(isProcessingImage)
                 }
             }
             .onChange(of: selectedItem) { _, newItem in
                 Task {
-                    if let data = try? await newItem?.loadTransferable(type: Data.self) {
-                        selectedImageData = data
+                    guard let newItem = newItem else { return }
+                    
+                    do {
+                        isProcessingImage = true
+                        
+                        // Load the image data
+                        if let data = try await newItem.loadTransferable(type: Data.self) {
+                            // Process through RemBg API
+                            let processedData = try await RemBgService.shared.removeBackground(from: data)
+                            selectedImageData = processedData
+                            
+                            // Only analyze if fields are empty (user might be just changing the photo)
+                            if category.isEmpty || color.isEmpty || season.isEmpty {
+                                do {
+                                    let analysis = try await OpenAIService.shared.analyzeClothing(imageData: processedData)
+                                    
+                                    // Only fill empty fields
+                                    withAnimation {
+                                        if category.isEmpty {
+                                            category = analysis.category
+                                        }
+                                        if color.isEmpty {
+                                            color = analysis.color
+                                        }
+                                        if season.isEmpty {
+                                            season = analysis.season
+                                        }
+                                    }
+                                } catch {
+                                    print("AI analysis failed: \(error)")
+                                }
+                            }
+                        }
+                    } catch {
+                        // If background removal fails, use original image
+                        if let data = try? await newItem.loadTransferable(type: Data.self) {
+                            selectedImageData = data
+                        }
+                        errorMessage = "Background removal failed: \(error.localizedDescription). Using original image."
+                        showingError = true
                     }
+                    
+                    isProcessingImage = false
                 }
             }
             .alert("Error", isPresented: $showingError) {
@@ -346,7 +479,7 @@ struct EditClothingItemView: View {
         }
         
         guard !category.isEmpty else {
-            errorMessage = "Please enter a category"
+            errorMessage = "Please select a category"
             showingError = true
             return
         }
@@ -358,7 +491,7 @@ struct EditClothingItemView: View {
         }
         
         guard !season.isEmpty else {
-            errorMessage = "Please enter a season"
+            errorMessage = "Please select a season"
             showingError = true
             return
         }
