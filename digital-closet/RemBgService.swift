@@ -8,8 +8,8 @@ class RemBgService {
     private let apiURL = "https://api.remove.bg/v1.0/removebg"
     
     private init() {
-        // Get API key from SecureConfig
-        self.apiKey = SecureConfig.remBgKey
+        // Prefer environment variable if available for security
+        self.apiKey = ProcessInfo.processInfo.environment["REMBG_KEY"] ?? SecureConfig.remBgKey
     }
     
     func removeBackground(from imageData: Data) async throws -> Data {
@@ -17,7 +17,10 @@ class RemBgService {
             throw RemBgError.missingAPIKey
         }
         
-        var request = URLRequest(url: URL(string: apiURL)!)
+        guard let url = URL(string: apiURL) else {
+            throw RemBgError.invalidURL
+        }
+        var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue(apiKey, forHTTPHeaderField: "X-Api-Key")
         
@@ -73,6 +76,7 @@ class RemBgService {
 
 enum RemBgError: LocalizedError {
     case missingAPIKey
+    case invalidURL
     case invalidResponse
     case badRequest
     case insufficientCredits
@@ -84,6 +88,8 @@ enum RemBgError: LocalizedError {
         switch self {
         case .missingAPIKey:
             return "API key is missing"
+        case .invalidURL:
+            return "Invalid remove.bg API URL"
         case .invalidResponse:
             return "Invalid response from server"
         case .badRequest:

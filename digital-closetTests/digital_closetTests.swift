@@ -10,8 +10,10 @@ import Testing
 
 struct digital_closetTests {
 
-    @Test func example() async throws {
-        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
+    @Test func categorySubcategories() throws {
+        for category in ClothingCategory.allCases {
+            #expect(!category.subcategories.isEmpty)
+        }
     }
 
 }
