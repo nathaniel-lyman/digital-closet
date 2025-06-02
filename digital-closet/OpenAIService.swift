@@ -8,10 +8,10 @@ class OpenAIService {
     private let apiURL = "https://api.openai.com/v1/chat/completions"
     
     private init() {
-        // Get API key from SecureConfig
-        self.apiKey = SecureConfig.openAIKey
-        
-        // In production, use environment variables or keychain storage
+        // Prefer environment variable if available for security
+        self.apiKey = ProcessInfo.processInfo.environment["OPENAI_KEY"] ?? SecureConfig.openAIKey
+
+        // In production, consider using keychain storage
     }
     
     struct ClothingAnalysis: Codable {
@@ -34,7 +34,10 @@ class OpenAIService {
         let base64Image = imageData.base64EncodedString()
         
         // Prepare the request
-        var request = URLRequest(url: URL(string: apiURL)!)
+        guard let url = URL(string: apiURL) else {
+            throw OpenAIError.invalidURL
+        }
+        var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -105,6 +108,7 @@ class OpenAIService {
 
 enum OpenAIError: LocalizedError {
     case missingAPIKey
+    case invalidURL
     case invalidResponse
     case apiError(statusCode: Int)
     case parsingError
@@ -113,6 +117,8 @@ enum OpenAIError: LocalizedError {
         switch self {
         case .missingAPIKey:
             return "OpenAI API key is missing"
+        case .invalidURL:
+            return "Invalid OpenAI API URL"
         case .invalidResponse:
             return "Invalid response from OpenAI"
         case .apiError(let code):

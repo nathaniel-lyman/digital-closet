@@ -13,12 +13,13 @@ struct OutfitBuilderView: View {
     
     @State private var outfitName = ""
     @State private var selectedItems: [String: ClothingItem] = [:] // Category -> Item
+    @State private var cachedSelection: [String: UUID] = [:]
     @State private var isGenerating = false
     @State private var generatedImage: UIImage?
     @State private var showingError = false
     @State private var errorMessage = ""
     
-    private let categories = ["Shirt", "Pants", "Jacket", "Dress", "Shoes", "Accessory"]
+    private let categories = ClothingCategory.allCases.map { $0.rawValue }
     private let layerOrder = ["Shoes", "Pants", "Dress", "Shirt", "Jacket", "Accessory"] // Bottom to top
     
     var body: some View {
@@ -155,8 +156,15 @@ struct OutfitBuilderView: View {
     private func generateOutfitPreview() {
         guard !selectedItems.isEmpty else {
             generatedImage = nil
+            cachedSelection = [:]
             return
         }
+
+        let currentSelection = selectedItems.compactMapValues { $0.id }
+        if currentSelection == cachedSelection {
+            return
+        }
+        cachedSelection = currentSelection
         
         isGenerating = true
         
