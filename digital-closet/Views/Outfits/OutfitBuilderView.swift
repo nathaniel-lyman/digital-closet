@@ -6,7 +6,6 @@ struct OutfitBuilderView: View {
     @Environment(\.dismiss) private var dismiss
     
     @FetchRequest(
-        entity: ClothingItem.entity(),
         sortDescriptors: [NSSortDescriptor(keyPath: \ClothingItem.title, ascending: true)],
         animation: .default)
     private var allItems: FetchedResults<ClothingItem>

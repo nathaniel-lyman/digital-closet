@@ -30,7 +30,6 @@ struct ContentView: View {
 struct ClosetView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @FetchRequest(
-        entity: ClothingItem.entity(),
         sortDescriptors: [NSSortDescriptor(keyPath: \ClothingItem.category, ascending: true)],
         animation: .default)
     private var items: FetchedResults<ClothingItem>

@@ -4,7 +4,6 @@ import CoreData
 struct OutfitsListView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @FetchRequest(
-        entity: Outfit.entity(),
         sortDescriptors: [NSSortDescriptor(keyPath: \Outfit.createdDate, ascending: false)],
         animation: .default)
     private var outfits: FetchedResults<Outfit>
@@ -139,7 +138,6 @@ struct OutfitDetailView: View {
         let itemIds = outfit.itemIds ?? []
         let predicate = NSPredicate(format: "id IN %@", itemIds)
         _items = FetchRequest<ClothingItem>(
-            entity: ClothingItem.entity(),
             sortDescriptors: [NSSortDescriptor(keyPath: \ClothingItem.category, ascending: true)],
             predicate: predicate
         )
