@@ -245,37 +245,15 @@ struct AddClothingItemView: View {
     @State private var selectedImageData: Data?
     @State private var isProcessingImage = false
     @State private var title = ""
-    @State private var category = ""
-    private let categories = [
-        "Shirt",
-        "Pants",
-        "Jacket",
-        "Dress",
-        "Shoes",
-        "Accessory"
-    ]
+    @State private var category: ClothingCategory?
+    private let categories = ClothingCategory.allCases
     @State private var subcategory = ""
     @State private var color = ""
     @State private var showingError = false
     @State private var errorMessage = ""
     
     private var subcategories: [String] {
-        switch category {
-        case "Shirt":
-            return ["Button-Down", "T-Shirt", "Polo", "Tank Top", "Blouse", "Other"]
-        case "Pants":
-            return ["Jeans", "Chinos", "Shorts", "Sweatpants", "Dress Pants", "Other"]
-        case "Jacket":
-            return ["Bomber", "Denim", "Leather", "Blazer", "Puffer", "Windbreaker", "Other"]
-        case "Dress":
-            return ["Casual", "Formal", "Maxi", "Mini", "Midi", "Other"]
-        case "Shoes":
-            return ["Sneakers", "Boots", "Dress Shoes", "Sandals", "Heels", "Loafers", "Other"]
-        case "Accessory":
-            return ["Hat", "Bag", "Belt", "Scarf", "Jewelry", "Watch", "Other"]
-        default:
-            return []
-        }
+        category?.subcategories ?? []
     }
     
     var body: some View {
@@ -308,9 +286,9 @@ struct AddClothingItemView: View {
                     TextField("Title", text: $title)
                         .textInputAutocapitalization(.words)
                     Picker("Category", selection: $category) {
-                        Text("Select Category").tag("")
-                        ForEach(categories, id: \.self) { option in
-                            Text(option).tag(option)
+                        Text("Select Category").tag(nil as ClothingCategory?)
+                        ForEach(categories) { option in
+                            Text(option.rawValue).tag(Optional(option))
                         }
                     }
                     .pickerStyle(.menu)
@@ -318,7 +296,7 @@ struct AddClothingItemView: View {
                         // Reset subcategory when category changes
                         subcategory = ""
                     }
-                    if !category.isEmpty {
+                    if category != nil {
                         Picker("Type", selection: $subcategory) {
                             Text("Select Type").tag("")
                             ForEach(subcategories, id: \.self) { option in
@@ -393,7 +371,7 @@ struct AddClothingItemView: View {
                             let analysis = try await OpenAIService.shared.analyzeClothing(imageData: dataForAnalysis)
                             withAnimation {
                                 title = analysis.title
-                                category = analysis.category
+                                category = ClothingCategory(rawValue: analysis.category)
                                 subcategory = analysis.subcategory
                                 color = analysis.color
                             }
@@ -432,7 +410,7 @@ struct AddClothingItemView: View {
             return
         }
         
-        guard !category.isEmpty else {
+        guard let category = category else {
             errorMessage = "Please select a category"
             showingError = true
             return
@@ -454,7 +432,7 @@ struct AddClothingItemView: View {
         let newItem = ClothingItem(context: viewContext)
         newItem.id = UUID()
         newItem.title = title
-        newItem.category = category
+        newItem.category = category.rawValue
         newItem.subcategory = subcategory
         newItem.color = color
         newItem.imageData = imageData
@@ -479,43 +457,21 @@ struct EditClothingItemView: View {
     @State private var selectedImageData: Data?
     @State private var isProcessingImage = false
     @State private var title: String
-    @State private var category: String
-    private let categories = [
-        "Shirt",
-        "Pants",
-        "Jacket",
-        "Dress",
-        "Shoes",
-        "Accessory"
-    ]
+    @State private var category: ClothingCategory?
+    private let categories = ClothingCategory.allCases
     @State private var subcategory: String
     @State private var color: String
     @State private var showingError = false
     @State private var errorMessage = ""
     
     private var subcategories: [String] {
-        switch category {
-        case "Shirt":
-            return ["Button-Down", "T-Shirt", "Polo", "Tank Top", "Blouse", "Other"]
-        case "Pants":
-            return ["Jeans", "Chinos", "Shorts", "Sweatpants", "Dress Pants", "Other"]
-        case "Jacket":
-            return ["Bomber", "Denim", "Leather", "Blazer", "Puffer", "Windbreaker", "Other"]
-        case "Dress":
-            return ["Casual", "Formal", "Maxi", "Mini", "Midi", "Other"]
-        case "Shoes":
-            return ["Sneakers", "Boots", "Dress Shoes", "Sandals", "Heels", "Loafers", "Other"]
-        case "Accessory":
-            return ["Hat", "Bag", "Belt", "Scarf", "Jewelry", "Watch", "Other"]
-        default:
-            return []
-        }
+        category?.subcategories ?? []
     }
     
     init(item: ClothingItem) {
         self.item = item
         _title = State(initialValue: item.title ?? "")
-        _category = State(initialValue: item.category ?? "")
+        _category = State(initialValue: ClothingCategory(rawValue: item.category ?? ""))
         _subcategory = State(initialValue: item.subcategory ?? "")
         _color = State(initialValue: item.color ?? "")
         _selectedImageData = State(initialValue: item.imageData)
@@ -551,9 +507,9 @@ struct EditClothingItemView: View {
                     TextField("Title", text: $title)
                         .textInputAutocapitalization(.words)
                     Picker("Category", selection: $category) {
-                        Text("Select Category").tag("")
-                        ForEach(categories, id: \.self) { option in
-                            Text(option).tag(option)
+                        Text("Select Category").tag(nil as ClothingCategory?)
+                        ForEach(categories) { option in
+                            Text(option.rawValue).tag(Optional(option))
                         }
                     }
                     .pickerStyle(.menu)
@@ -561,7 +517,7 @@ struct EditClothingItemView: View {
                         // Reset subcategory when category changes
                         subcategory = ""
                     }
-                    if !category.isEmpty {
+                    if category != nil {
                         Picker("Type", selection: $subcategory) {
                             Text("Select Type").tag("")
                             ForEach(subcategories, id: \.self) { option in
@@ -632,12 +588,12 @@ struct EditClothingItemView: View {
                         selectedImageData = finalSelectedImageData // Update the @State for preview and saving
                         
                         // 4. Only analyze if fields are empty (user might be just changing the photo)
-                        if title.isEmpty || category.isEmpty || subcategory.isEmpty || color.isEmpty {
+                        if title.isEmpty || category == nil || subcategory.isEmpty || color.isEmpty {
                             do {
                                 let analysis = try await OpenAIService.shared.analyzeClothing(imageData: dataForAnalysis)
                                 withAnimation {
                                     if title.isEmpty { title = analysis.title }
-                                    if category.isEmpty { category = analysis.category }
+                                    if category == nil { category = ClothingCategory(rawValue: analysis.category) }
                                     if subcategory.isEmpty { subcategory = analysis.subcategory }
                                     if color.isEmpty { color = analysis.color }
                                 }
@@ -676,7 +632,7 @@ struct EditClothingItemView: View {
             return
         }
         
-        guard !category.isEmpty else {
+        guard let category = category else {
             errorMessage = "Please select a category"
             showingError = true
             return
@@ -696,7 +652,7 @@ struct EditClothingItemView: View {
         
         // Update the existing item
         item.title = title
-        item.category = category
+        item.category = category.rawValue
         item.subcategory = subcategory
         item.color = color
         item.imageData = imageData
