@@ -7,7 +7,7 @@ class OpenAIService {
     private let apiKey: String
     private let apiURL = "https://api.openai.com/v1/chat/completions"
     
-    private init() {
+    init() {
         // Get API key from SecureConfig
         self.apiKey = SecureConfig.openAIKey
         

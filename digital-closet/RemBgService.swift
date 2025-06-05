@@ -7,7 +7,7 @@ class RemBgService {
     private let apiKey: String
     private let apiURL = "https://api.remove.bg/v1.0/removebg"
     
-    private init() {
+    init() {
         // Get API key from SecureConfig
         self.apiKey = SecureConfig.remBgKey
     }

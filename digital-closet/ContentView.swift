@@ -138,27 +138,30 @@ struct ClosetView: View {
         }
     }
     
+    // Define color order as a static property to avoid compilation issues
+    private static let colorOrder: [String] = [
+        "white", "cream", "beige", "tan", "brown",
+        "gray", "grey", "black",
+        "red", "pink", "orange", "yellow",
+        "green", "blue", "navy", "purple",
+        "multi", "pattern", "other"
+    ]
+    
     // Sort items by color using a predefined color order
     private func sortItemsByColor(_ items: [ClothingItem]) -> [ClothingItem] {
-        let colorOrder = [
-            "white", "cream", "beige", "tan", "brown",
-            "gray", "grey", "black",
-            "red", "pink", "orange", "yellow",
-            "green", "blue", "navy", "purple",
-            "multi", "pattern", "other"
-        ]
-        
         return items.sorted { item1, item2 in
             let color1 = item1.color?.lowercased() ?? "other"
             let color2 = item2.color?.lowercased() ?? "other"
             
             // Find the index of each color in the order array
-            let index1 = colorOrder.firstIndex(where: { color1.contains($0) }) ?? colorOrder.count
-            let index2 = colorOrder.firstIndex(where: { color2.contains($0) }) ?? colorOrder.count
+            let index1 = Self.colorOrder.firstIndex(where: { color1.contains($0) }) ?? Self.colorOrder.count
+            let index2 = Self.colorOrder.firstIndex(where: { color2.contains($0) }) ?? Self.colorOrder.count
             
             if index1 == index2 {
                 // If same color category, sort alphabetically by title
-                return (item1.title ?? "") < (item2.title ?? "")
+                let title1 = item1.title ?? ""
+                let title2 = item2.title ?? ""
+                return title1 < title2
             }
             return index1 < index2
         }
