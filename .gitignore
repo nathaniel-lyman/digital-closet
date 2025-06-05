@@ -65,3 +65,8 @@ fastlane/test_output
 
 # Mac
 .DS_Store
+
+# Documentation files (exclude from Xcode build)
+**/Models-README.md
+**/Views-README.md
+**/Services-README.md
