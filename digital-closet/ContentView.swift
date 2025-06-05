@@ -31,16 +31,21 @@ struct ClosetView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @FetchRequest(
         entity: ClothingItem.entity(),
-        sortDescriptors: [NSSortDescriptor(keyPath: \ClothingItem.id, ascending: true)],
+        sortDescriptors: [NSSortDescriptor(keyPath: \ClothingItem.category, ascending: true)],
         animation: .default)
     private var items: FetchedResults<ClothingItem>
     
     @State private var showingAddSheet = false
     @State private var selectedItem: ClothingItem?
     
-    private let columns = [
-        GridItem(.adaptive(minimum: 160), spacing: 16)
-    ]
+    // Group items by category and subcategory
+    private var groupedItems: [(key: String, items: [ClothingItem])] {
+        let grouped = Dictionary(grouping: items) { item in
+            "\(item.category ?? "Unknown") - \(item.subcategory ?? "Other")"
+        }
+        return grouped.sorted { $0.key < $1.key }
+            .map { (key: $0.key, items: sortItemsByColor($0.value)) }
+    }
     
     var body: some View {
         NavigationView {
@@ -58,25 +63,49 @@ struct ClosetView: View {
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .frame(maxWidth: .infinity, minHeight: 400)
                     .padding()
                 } else {
-                    LazyVGrid(columns: columns, spacing: 16) {
-                        ForEach(items) { item in
-                            ClothingItemView(item: item)
-                                .onTapGesture {
-                                    selectedItem = item
+                    VStack(alignment: .leading, spacing: 24) {
+                        ForEach(groupedItems, id: \.key) { group in
+                            VStack(alignment: .leading, spacing: 12) {
+                                // Category header
+                                HStack {
+                                    Text(group.key)
+                                        .font(.headline)
+                                        .foregroundColor(.primary)
+                                    
+                                    Spacer()
+                                    
+                                    Text("\(group.items.count) item\(group.items.count == 1 ? "" : "s")")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
                                 }
-                                .contextMenu {
-                                    Button(role: .destructive) {
-                                        deleteItem(item)
-                                    } label: {
-                                        Label("Delete", systemImage: "trash")
+                                .padding(.horizontal)
+                                
+                                // Carousel for items
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 16) {
+                                        ForEach(group.items) { item in
+                                            ClothingItemCard(item: item)
+                                                .onTapGesture {
+                                                    selectedItem = item
+                                                }
+                                                .contextMenu {
+                                                    Button(role: .destructive) {
+                                                        deleteItem(item)
+                                                    } label: {
+                                                        Label("Delete", systemImage: "trash")
+                                                    }
+                                                }
+                                        }
                                     }
+                                    .padding(.horizontal)
                                 }
+                            }
                         }
                     }
-                    .padding()
+                    .padding(.vertical)
                 }
             }
             .navigationTitle("Digital Closet")
@@ -108,9 +137,35 @@ struct ClosetView: View {
             }
         }
     }
+    
+    // Sort items by color using a predefined color order
+    private func sortItemsByColor(_ items: [ClothingItem]) -> [ClothingItem] {
+        let colorOrder = [
+            "white", "cream", "beige", "tan", "brown",
+            "gray", "grey", "black",
+            "red", "pink", "orange", "yellow",
+            "green", "blue", "navy", "purple",
+            "multi", "pattern", "other"
+        ]
+        
+        return items.sorted { item1, item2 in
+            let color1 = item1.color?.lowercased() ?? "other"
+            let color2 = item2.color?.lowercased() ?? "other"
+            
+            // Find the index of each color in the order array
+            let index1 = colorOrder.firstIndex(where: { color1.contains($0) }) ?? colorOrder.count
+            let index2 = colorOrder.firstIndex(where: { color2.contains($0) }) ?? colorOrder.count
+            
+            if index1 == index2 {
+                // If same color category, sort alphabetically by title
+                return (item1.title ?? "") < (item2.title ?? "")
+            }
+            return index1 < index2
+        }
+    }
 }
 
-struct ClothingItemView: View {
+struct ClothingItemCard: View {
     let item: ClothingItem
     
     var body: some View {
@@ -120,12 +175,12 @@ struct ClothingItemView: View {
                 Image(uiImage: uiImage)
                     .resizable()
                     .scaledToFill()
-                    .frame(width: 160, height: 160)
+                    .frame(width: 140, height: 180)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             } else {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(Color.gray.opacity(0.2))
-                    .frame(width: 160, height: 160)
+                    .frame(width: 140, height: 180)
                     .overlay(
                         Image(systemName: "photo")
                             .font(.largeTitle)
@@ -134,26 +189,48 @@ struct ClothingItemView: View {
             }
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(item.title?.isEmpty == false ? item.title! : "Untitled")
-                    .font(.headline)
-                    .foregroundColor(item.title?.isEmpty == false ? .primary : .secondary)
-                    .lineLimit(1)
-                
-                Text(item.subcategory?.isEmpty == false ? item.subcategory! : "No type")
+                Text(item.title ?? "Untitled")
                     .font(.subheadline)
-                    .foregroundColor(item.subcategory?.isEmpty == false ? .primary : .secondary)
+                    .fontWeight(.medium)
                     .lineLimit(1)
                 
-                Text(item.color?.isEmpty == false ? item.color! : "No color")
-                    .font(.caption)
-                    .foregroundColor(item.color?.isEmpty == false ? .primary : .secondary)
-                    .lineLimit(1)
+                HStack(spacing: 4) {
+                    // Color indicator
+                    Circle()
+                        .fill(colorForName(item.color ?? "gray"))
+                        .frame(width: 12, height: 12)
+                    
+                    Text(item.color ?? "No color")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
             }
-            .frame(maxWidth: 160, alignment: .leading)
+            .frame(width: 140, alignment: .leading)
         }
         .background(Color(.systemBackground))
         .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
+        .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
+    }
+    
+    // Helper function to convert color names to SwiftUI colors
+    private func colorForName(_ colorName: String) -> Color {
+        let name = colorName.lowercased()
+        
+        // Check for common color names
+        if name.contains("red") { return .red }
+        if name.contains("blue") || name.contains("navy") { return .blue }
+        if name.contains("green") { return .green }
+        if name.contains("yellow") { return .yellow }
+        if name.contains("orange") { return .orange }
+        if name.contains("purple") { return .purple }
+        if name.contains("pink") { return .pink }
+        if name.contains("brown") || name.contains("tan") { return .brown }
+        if name.contains("gray") || name.contains("grey") { return .gray }
+        if name.contains("black") { return .black }
+        if name.contains("white") || name.contains("cream") { return Color(.systemGray6) }
+        
+        return .gray
     }
 }
 
