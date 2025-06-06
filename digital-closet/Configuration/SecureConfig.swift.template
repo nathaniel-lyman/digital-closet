@@ -1,0 +1,15 @@
+// This is a template file. Copy this to SecureConfig.swift and add your API keys
+// SecureConfig.swift is gitignored and should NEVER be committed
+//
+// To set up:
+// 1. Copy this file: cp SecureConfig.swift.template SecureConfig.swift
+// 2. Add your API keys to SecureConfig.swift
+// 3. Or better: use Xcode scheme environment variables (see README)
+
+struct SecureConfig {
+    // Add your Remove.bg API key here or set REMBG_KEY environment variable
+    static let remBgKey = ""
+    
+    // Add your OpenAI API key here or set OPENAI_KEY environment variable
+    static let openAIKey = ""
+} 

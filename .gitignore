@@ -9,6 +9,7 @@ xcuserdata/
 Secrets.xcconfig
 *.xcconfig
 SecureConfig.swift
+Config.plist
 
 ## Build generated
 build/

@@ -7,11 +7,9 @@ class OpenAIService {
     private let apiKey: String
     private let apiURL = "https://api.openai.com/v1/chat/completions"
     
-    init() {
-        // Prefer environment variable if available for security
-        self.apiKey = ProcessInfo.processInfo.environment["OPENAI_KEY"] ?? SecureConfig.openAIKey
-
-        // In production, consider using keychain storage
+    private init() {
+        // Use ConfigurationManager to get API key
+        self.apiKey = ConfigurationManager.shared.getAPIKey(for: .openAI) ?? ""
     }
     
     struct ClothingAnalysis: Codable {

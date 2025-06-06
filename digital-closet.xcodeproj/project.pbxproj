@@ -29,9 +29,22 @@
 		FA9ACA342DEC8E4400051C18 /* digital-closetUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "digital-closetUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		FAB1B03B2DF134ED006D6B3D /* Exceptions for "digital-closet" folder in "digital-closet" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = FA9ACA1C2DEC8E4400051C18 /* digital-closet */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		FA9ACA1F2DEC8E4400051C18 /* digital-closet */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				FAB1B03B2DF134ED006D6B3D /* Exceptions for "digital-closet" folder in "digital-closet" target */,
+			);
 			path = "digital-closet";
 			sourceTree = "<group>";
 		};
@@ -404,6 +417,8 @@
 				DEVELOPMENT_TEAM = V47AUL3WV8;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "digital-closet/Info.plist";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app does not store photos.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -432,6 +447,8 @@
 				DEVELOPMENT_TEAM = V47AUL3WV8;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "digital-closet/Info.plist";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app does not store photos.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

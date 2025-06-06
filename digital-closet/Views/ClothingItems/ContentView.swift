@@ -371,7 +371,23 @@ struct AddClothingItemView: View {
                             withAnimation {
                                 title = analysis.title
                                 category = ClothingCategory(rawValue: analysis.category)
-                                subcategory = analysis.subcategory
+                                if let cat = category {
+                                    // Try exact match first
+                                    if let normalized = cat.subcategories.first(where: { $0.caseInsensitiveCompare(analysis.subcategory.trimmingCharacters(in: .whitespacesAndNewlines)) == .orderedSame }) {
+                                        subcategory = normalized
+                                    } else {
+                                        // Try contains (for plurals, dashes, etc)
+                                        let lowerAI = analysis.subcategory.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                                        if let fuzzy = cat.subcategories.first(where: { lowerAI.contains($0.lowercased()) || $0.lowercased().contains(lowerAI) }) {
+                                            subcategory = fuzzy
+                                        } else {
+                                            // Optionally, fallback to "Other"
+                                            subcategory = cat.subcategories.contains("Other") ? "Other" : ""
+                                        }
+                                    }
+                                } else {
+                                    subcategory = ""
+                                }
                                 color = analysis.color
                             }
                         } catch {

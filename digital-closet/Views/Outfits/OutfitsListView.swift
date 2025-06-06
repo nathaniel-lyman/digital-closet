@@ -61,7 +61,7 @@ struct OutfitsListView: View {
                 }
             }
             .sheet(isPresented: $showingOutfitBuilder) {
-                OutfitBuilderView()
+                OutfitBuilderView(context: viewContext)
             }
             .sheet(item: $selectedOutfit) { outfit in
                 OutfitDetailView(outfit: outfit)

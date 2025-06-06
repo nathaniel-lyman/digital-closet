@@ -7,9 +7,9 @@ class RemBgService {
     private let apiKey: String
     private let apiURL = "https://api.remove.bg/v1.0/removebg"
     
-    init() {
-        // Prefer environment variable if available for security
-        self.apiKey = ProcessInfo.processInfo.environment["REMBG_KEY"] ?? SecureConfig.remBgKey
+    private init() {
+        // Use ConfigurationManager to get API key
+        self.apiKey = ConfigurationManager.shared.getAPIKey(for: .removeBg) ?? ""
     }
     
     func removeBackground(from imageData: Data) async throws -> Data {
